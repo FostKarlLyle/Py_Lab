@@ -358,6 +358,23 @@ pre {
 .error-title { font-weight: 800; font-size: 1rem; margin-bottom: 4px; }
 .error-explain { margin-bottom: 6px; color: #4b1313; }
 .error-where { font-weight: 700; margin-bottom: 6px; }
+.error-code {
+  margin: 0 0 10px;
+  background: #3b0d0d;
+  color: #fecaca;
+  font-size: 0.85rem;
+  border-left: 3px solid var(--err);
+}
+.error-fix-title { font-weight: 700; margin-bottom: 4px; color: #14532d; }
+.error-fix {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  background: var(--ok-bg);
+  color: #14532d;
+  border-radius: 8px;
+  padding: 8px 8px 8px 28px;
+}
+.error-fix li { margin: 3px 0; }
 .error-type { font-family: var(--mono); font-size: 0.85rem; color: #7f1d1d; margin-bottom: 6px; word-break: break-word; }
 .error-box details summary { cursor: pointer; font-size: 0.85rem; color: #7f1d1d; }
 .error-box details pre { margin-top: 6px; background: #3b0d0d; font-size: 0.8rem; }

@@ -271,21 +271,42 @@ function appendError(result, lineNo) {
   title.className = "error-title";
   title.textContent = `⚠️ ${result.judul}`;
 
-  const type = document.createElement("div");
-  type.className = "error-type";
-  type.textContent = result.tipe + (result.pesan ? `: ${result.pesan}` : "");
-
   const explain = document.createElement("p");
   explain.className = "error-explain";
   explain.textContent = result.penjelasan;
 
   box.append(title, explain);
+
   if (lineNo) {
     const where = document.createElement("div");
     where.className = "error-where";
     where.textContent = `📍 Ada di baris ${lineNo}`;
     box.append(where);
+    if (result.kodeBaris.trim()) {
+      const codeLine = document.createElement("pre");
+      codeLine.className = "error-code";
+      codeLine.textContent = `${String(lineNo).padStart(3)} | ${result.kodeBaris}`;
+      box.append(codeLine);
+    }
   }
+
+  if (result.saran.length) {
+    const fixTitle = document.createElement("div");
+    fixTitle.className = "error-fix-title";
+    fixTitle.textContent = "🔧 Cara memperbaikinya:";
+    const list = document.createElement("ul");
+    list.className = "error-fix";
+    for (const s of result.saran) {
+      const li = document.createElement("li");
+      li.textContent = s;
+      list.append(li);
+    }
+    box.append(fixTitle, list);
+  }
+
+  const type = document.createElement("div");
+  type.className = "error-type";
+  type.textContent = result.tipe + (result.pesan ? `: ${result.pesan}` : "");
   box.append(type);
 
   const details = document.createElement("details");
@@ -317,6 +338,7 @@ async function run() {
   setBusy(true);
 
   const lesson = currentLesson();
+  const code = els.editor.value;
   clearOutput();
   errorLine = null;
   renderGutter(null);
@@ -324,7 +346,7 @@ async function run() {
 
   let result;
   try {
-    result = await runCode(els.editor.value, {
+    result = await runCode(code, {
       onOutput: (text) => appendLine(text),
       onInput: askUser,
     });
@@ -341,7 +363,7 @@ async function run() {
       renderLessonList();
     }
   } else {
-    const explained = explainError(result.message);
+    const explained = explainError(result.message, code);
     errorLine = explained.baris;
     renderGutter(errorLine);
     if (errorLine) {
