@@ -82,7 +82,13 @@ function renderLessonList() {
 
     const num = document.createElement("span");
     num.className = "lesson-item-num";
-    num.textContent = doneSet.has(lesson.id) ? "✓" : String(i + 1);
+    if (doneSet.has(lesson.id)) {
+      num.textContent = "✓";
+    } else if (lesson.id === "bebas") {
+      num.textContent = "✎";
+    } else {
+      num.textContent = String(i + 1);
+    }
     if (doneSet.has(lesson.id)) num.classList.add("done");
 
     const title = document.createElement("span");

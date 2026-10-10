@@ -28,9 +28,15 @@ export function loadPython() {
     pyPromise = (async () => {
       const { loadPyodide } = await import(`${PYODIDE_INDEX_URL}pyodide.mjs`);
       const py = await loadPyodide({ indexURL: PYODIDE_INDEX_URL });
-      const forward = (text) => activeHandlers?.onOutput(text);
-      py.setStdout({ batched: (s) => forward(s + "\n") });
-      py.setStderr({ batched: (s) => forward(s + "\n") });
+      // Pakai mode "write" (teks mentah apa adanya). Mode "batched" tidak mengirim
+      // teks tanpa baris baru, sehingga print(..., end="") bisa tertahan dan urutan output salah.
+      const decoder = new TextDecoder();
+      const forward = (buf) => {
+        activeHandlers?.onOutput(decoder.decode(buf, { stream: true }));
+        return buf.length;
+      };
+      py.setStdout({ write: forward });
+      py.setStderr({ write: forward });
       return py;
     })();
     // Jika gagal (misalnya tidak ada internet), izinkan percobaan ulang nanti.
