@@ -1,7 +1,9 @@
-import { LESSONS } from "./lessons.js";
-import { GLOSSARY, CHEAT_SHEET } from "./glossary.js";
-import { loadPython, runCode } from "./runner.js";
-import { explainError } from "./errors.js";
+// Penanda versi (?v=...) dipasang di setiap import agar browser tidak memakai file lama.
+// Naikkan angkanya setiap kali ada perubahan, bersama dengan index.html dan label "v5".
+import { LESSONS } from "./lessons.js?v=5";
+import { GLOSSARY, CHEAT_SHEET } from "./glossary.js?v=5";
+import { loadPython, runCode } from "./runner.js?v=5";
+import { explainError } from "./errors.js?v=5";
 
 // ---------- Elemen halaman ----------
 const $ = (id) => document.getElementById(id);

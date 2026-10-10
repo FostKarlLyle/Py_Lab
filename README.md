@@ -43,3 +43,7 @@ js/glossary.js    Isi Kamus dan Cheat Sheet
 - Versi Pyodide diatur di `js/runner.js` (`PYODIDE_VERSION`).
 - Setiap kali dijalankan, kode memakai namespace baru, sehingga variabel dari run sebelumnya tidak terbawa.
 - Karena kode berjalan di thread utama browser, program yang terjebak perulangan tak berhenti akan membuat halaman tidak responsif. Muat ulang halaman (F5) untuk memulai lagi.
+
+## Untuk pengembang
+
+Setiap kali mengubah kode JavaScript atau CSS, naikkan angka versi `v=N` di `index.html` (tautan CSS dan script) dan di import `js/app.js`, lalu sesuaikan label `vN` di header. Dengan begitu browser tidak memakai file lama. Label versi di pojok atas juga memudahkan memastikan halaman yang dibuka sudah yang terbaru.
