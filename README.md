@@ -16,13 +16,13 @@ Website belajar Python untuk pemula, berbahasa Indonesia. Kode Python dijalankan
 
 ## Cara menjalankan
 
-Tidak ada instalasi atau build. Cukup jalankan server statis dari folder ini:
+Tidak ada instalasi atau build. Cukup jalankan server kecil yang sudah disediakan:
 
 ```bash
-python3 -m http.server 8000
+python3 serve.py
 ```
 
-Lalu buka <http://localhost:8000> di browser.
+Lalu buka <http://localhost:8000> di browser. (`serve.py` memakai header anti-cache, jadi perubahan kode langsung terlihat setelah halaman dimuat ulang.)
 
 > Catatan: Pyodide dimuat dari CDN jsDelivr (`cdn.jsdelivr.net`) saat pertama kali halaman dibuka, jadi perlu koneksi internet. Setelah itu browser biasanya menyimpannya di cache.
 

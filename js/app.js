@@ -12,6 +12,8 @@ const els = {
   clearBtn: $("clear-btn"),
   editor: $("editor"),
   gutter: $("gutter"),
+  lineMark: $("line-mark"),
+  errorPanel: $("error-panel"),
   output: $("output"),
   lessonList: $("lesson-list"),
   lessonNumber: $("lesson-number"),
@@ -25,6 +27,10 @@ const els = {
   glossaryList: $("glossary-list"),
   cheatList: $("cheat-list"),
 };
+
+// Harus sama dengan CSS: padding atas editor 12px dan tinggi satu baris 24px.
+const EDITOR_PAD_TOP = 12;
+const LINE_PX = 24;
 
 // ---------- Penyimpanan lokal (aman jika localStorage diblokir) ----------
 const store = {
@@ -54,6 +60,7 @@ const codeKey = (id) => `pylab.code.${id}`;
 let currentIndex = 0;
 let running = false;
 let pyReady = false;
+let errorLine = null;
 
 const currentLesson = () => LESSONS[currentIndex];
 
@@ -84,12 +91,12 @@ function renderLessonList() {
     num.className = "lesson-item-num";
     if (doneSet.has(lesson.id)) {
       num.textContent = "✓";
+      num.classList.add("done");
     } else if (lesson.id === "bebas") {
       num.textContent = "✎";
     } else {
       num.textContent = String(i + 1);
     }
-    if (doneSet.has(lesson.id)) num.classList.add("done");
 
     const title = document.createElement("span");
     title.textContent = lesson.title;
@@ -136,6 +143,7 @@ function selectLesson(index) {
   renderLesson();
   els.editor.value = store.get(codeKey(currentLesson().id), currentLesson().starter);
   onEditorChange();
+  clearError();
   clearOutput();
   els.editor.focus();
 }
@@ -145,7 +153,7 @@ function saveCode() {
   store.set(codeKey(currentLesson().id), els.editor.value);
 }
 
-function renderGutter(errorLine = null) {
+function renderGutter() {
   const count = els.editor.value.split("\n").length;
   const frag = document.createDocumentFragment();
   for (let i = 1; i <= count; i++) {
@@ -158,11 +166,30 @@ function renderGutter(errorLine = null) {
   els.gutter.scrollTop = els.editor.scrollTop;
 }
 
-let errorLine = null;
-
 function onEditorChange() {
   saveCode();
-  renderGutter(errorLine);
+  renderGutter();
+}
+
+/** Garis merah penuh di baris error, mengikuti posisi scroll editor. */
+function positionLineMark() {
+  if (!errorLine) {
+    els.lineMark.hidden = true;
+    return;
+  }
+  const top = EDITOR_PAD_TOP + (errorLine - 1) * LINE_PX - els.editor.scrollTop;
+  const visible = top >= 0 && top < els.editor.clientHeight;
+  els.lineMark.style.top = `${top}px`;
+  els.lineMark.hidden = !visible;
+}
+
+/** Menghapus tanda error (highlight dan kotak penjelasan). Dipanggil saat kode diubah. */
+function clearError() {
+  errorLine = null;
+  els.lineMark.hidden = true;
+  els.errorPanel.hidden = true;
+  els.errorPanel.replaceChildren();
+  renderGutter();
 }
 
 /** Mengganti teks di posisi kursor (atau seluruh baris yang dipilih) dengan aman. */
@@ -180,13 +207,25 @@ function lineBounds(value, pos) {
   return { start, end };
 }
 
+/** Posisi (offset karakter) awal dari nomor baris tertentu. */
+function lineStartOffset(value, lineNo) {
+  let pos = 0;
+  for (let i = 1; i < lineNo; i++) {
+    const next = value.indexOf("\n", pos);
+    if (next === -1) break;
+    pos = next + 1;
+  }
+  return pos;
+}
+
 els.editor.addEventListener("input", () => {
-  errorLine = null;
+  clearError();
   onEditorChange();
 });
 
 els.editor.addEventListener("scroll", () => {
   els.gutter.scrollTop = els.editor.scrollTop;
+  positionLineMark();
 });
 
 els.editor.addEventListener("keydown", (e) => {
@@ -263,7 +302,19 @@ function appendInfo(text) {
   appendLine(text + "\n", "out-info");
 }
 
-function appendError(result, lineNo) {
+/** Meminta input lewat kotak isian, lalu mencatat pertanyaan dan jawaban di output. */
+function askUser(prompt) {
+  const question = prompt || "Masukkan input:";
+  const answer = window.prompt(question, "");
+  const value = answer ?? "";
+  appendLine(question, "out-prompt");
+  appendLine(value + "\n", "out-answer");
+  return value;
+}
+
+// ---------- Kotak penjelasan error ----------
+/** Membuat kotak penjelasan error: apa salahnya, baris mana, dan cara memperbaikinya. */
+function buildErrorCard(result) {
   const box = document.createElement("div");
   box.className = "error-box";
 
@@ -274,18 +325,25 @@ function appendError(result, lineNo) {
   const explain = document.createElement("p");
   explain.className = "error-explain";
   explain.textContent = result.penjelasan;
-
   box.append(title, explain);
 
-  if (lineNo) {
+  if (result.baris) {
     const where = document.createElement("div");
     where.className = "error-where";
-    where.textContent = `📍 Ada di baris ${lineNo}`;
+    where.textContent = `📍 Salah di baris ${result.baris}`;
+
+    const goBtn = document.createElement("button");
+    goBtn.className = "btn small";
+    goBtn.type = "button";
+    goBtn.textContent = "Tunjukkan di editor";
+    goBtn.addEventListener("click", () => focusErrorLine(result.baris));
+    where.append(" ", goBtn);
     box.append(where);
+
     if (result.kodeBaris.trim()) {
       const codeLine = document.createElement("pre");
       codeLine.className = "error-code";
-      codeLine.textContent = `${String(lineNo).padStart(3)} | ${result.kodeBaris}`;
+      codeLine.textContent = `${String(result.baris).padStart(3)} | ${result.kodeBaris}`;
       box.append(codeLine);
     }
   }
@@ -317,18 +375,35 @@ function appendError(result, lineNo) {
   details.append(summary, pre);
   box.append(details);
 
-  els.output.append(box);
-  els.output.scrollTop = els.output.scrollHeight;
+  return box;
 }
 
-/** Meminta input lewat kotak isian, lalu mencatat pertanyaan dan jawaban di output. */
-function askUser(prompt) {
-  const question = prompt || "Masukkan input:";
-  const answer = window.prompt(question, "");
-  const value = answer ?? "";
-  appendLine(question, "out-prompt");
-  appendLine(value + "\n", "out-answer");
-  return value;
+/** Menampilkan error di bawah editor, dan menandai baris yang salah. */
+function showError(result) {
+  errorLine = result.baris;
+  renderGutter();
+  els.errorPanel.replaceChildren(buildErrorCard(result));
+  els.errorPanel.hidden = false;
+  if (errorLine) {
+    scrollEditorToLine(errorLine);
+    positionLineMark();
+  }
+  els.errorPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/** Memindahkan kursor ke baris yang salah dan menyorotnya. */
+function focusErrorLine(lineNo) {
+  const value = els.editor.value;
+  const pos = lineStartOffset(value, lineNo);
+  els.editor.focus();
+  els.editor.setSelectionRange(pos, pos);
+  scrollEditorToLine(lineNo);
+}
+
+function scrollEditorToLine(lineNo) {
+  els.editor.scrollTop = Math.max(0, (lineNo - 3) * LINE_PX);
+  els.gutter.scrollTop = els.editor.scrollTop;
+  positionLineMark();
 }
 
 // ---------- Jalankan ----------
@@ -340,8 +415,7 @@ async function run() {
   const lesson = currentLesson();
   const code = els.editor.value;
   clearOutput();
-  errorLine = null;
-  renderGutter(null);
+  clearError();
   appendInfo("▶ Menjalankan kode...");
 
   let result;
@@ -364,19 +438,9 @@ async function run() {
     }
   } else {
     const explained = explainError(result.message, code);
-    errorLine = explained.baris;
-    renderGutter(errorLine);
-    if (errorLine) {
-      scrollEditorToLine(errorLine);
-    }
-    appendError(explained, errorLine);
+    appendLine("❌ Program berhenti karena ada error. Penjelasannya ada di bawah editor.\n", "out-error");
+    showError(explained);
   }
-}
-
-function scrollEditorToLine(lineNo) {
-  const lineHeight = parseFloat(getComputedStyle(els.editor).lineHeight) || 22;
-  els.editor.scrollTop = Math.max(0, (lineNo - 3) * lineHeight);
-  els.gutter.scrollTop = els.editor.scrollTop;
 }
 
 function setBusy(busy) {
@@ -391,7 +455,7 @@ els.resetBtn.addEventListener("click", () => {
   if (!window.confirm("Kembalikan kode ke contoh awal pelajaran ini?")) return;
   els.editor.value = lesson.starter;
   store.set(codeKey(lesson.id), lesson.starter);
-  errorLine = null;
+  clearError();
   onEditorChange();
 });
 
@@ -433,7 +497,7 @@ function insertIntoEditor(code) {
   const prefix = el.value.length && !el.value.endsWith("\n") ? "\n" : "";
   el.value = el.value + prefix + code + "\n";
   el.scrollTop = el.scrollHeight;
-  errorLine = null;
+  clearError();
   onEditorChange();
   el.focus();
 }
