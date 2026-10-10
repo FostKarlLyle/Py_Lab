@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Py Lab: belajar Python dari nol langsung di browser, dalam Bahasa Indonesia." />
+    <title>Py Lab · Belajar Python</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%8D%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">🐍</span>
+        <div>
+          <div class="brand-name">Py Lab</div>
+          <div class="brand-tagline">Belajar Python dari nol, langsung di browser</div>
+        </div>
+      </div>
+      <div id="py-status" class="status status-loading" role="status">Menyiapkan Python…</div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <nav class="tabs" role="tablist" aria-label="Alat bantu belajar">
+          <button class="tab active" role="tab" aria-selected="true" data-tab="lessons">📚 Pelajaran</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="glossary">📖 Kamus</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="cheat">⚡ Cheat Sheet</button>
+        </nav>
+
+        <section id="panel-lessons" class="panel" role="tabpanel">
+          <p class="muted small">Ikuti urutannya dari atas. Tanda ✓ berarti kamu sudah berhasil menjalankannya.</p>
+          <ol id="lesson-list" class="lesson-list"></ol>
+        </section>
+
+        <section id="panel-glossary" class="panel" role="tabpanel" hidden>
+          <input id="glossary-search" class="search" type="search" placeholder="Cari istilah, misalnya: fungsi" aria-label="Cari istilah" />
+          <div id="glossary-list"></div>
+        </section>
+
+        <section id="panel-cheat" class="panel" role="tabpanel" hidden>
+          <p class="muted small">Klik <strong>+ Tambah ke editor</strong> untuk menyalin contoh ke kode kamu.</p>
+          <div id="cheat-list"></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <section class="card lesson-card" aria-labelledby="lesson-title">
+          <div class="lesson-head">
+            <span id="lesson-number" class="badge"></span>
+            <h1 id="lesson-title"></h1>
+          </div>
+          <div id="lesson-desc" class="lesson-desc"></div>
+          <div class="task">
+            <strong>🎯 Latihan:</strong> <span id="lesson-task"></span>
+          </div>
+          <details class="hint">
+            <summary>💡 Butuh petunjuk?</summary>
+            <p id="lesson-hint"></p>
+          </details>
+          <div id="lesson-expected-wrap" class="expected">
+            <div class="label">Hasil yang diharapkan dari kode awal:</div>
+            <pre id="lesson-expected"></pre>
+          </div>
+        </section>
+
+        <section class="card editor-card" aria-label="Editor kode">
+          <div class="toolbar">
+            <div class="toolbar-title">✏️ Kode Python</div>
+            <div class="toolbar-actions">
+              <button id="reset-btn" class="btn small" type="button">↺ Reset</button>
+              <button id="run-btn" class="btn primary" type="button" disabled>▶ Jalankan <kbd>Ctrl+Enter</kbd></button>
+            </div>
+          </div>
+          <div class="editor-wrap">
+            <div id="gutter" class="gutter" aria-hidden="true"></div>
+            <textarea id="editor" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="Tulis kode Python di sini"></textarea>
+          </div>
+          <p class="muted small editor-tip">Tip: tekan <kbd>Tab</kbd> untuk menjorok, dan <kbd>Enter</kbd> setelah <code>:</code> akan menjorok otomatis. Kode kamu tersimpan otomatis di browser ini.</p>
+        </section>
+
+        <section class="card output-card" aria-label="Hasil output">
+          <div class="toolbar">
+            <div class="toolbar-title">🖥️ Output</div>
+            <button id="clear-btn" class="btn small" type="button">Bersihkan</button>
+          </div>
+          <div id="output" class="output" aria-live="polite">
+            <span class="out-info">Klik <strong>Jalankan</strong> untuk melihat hasil kodemu.</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
